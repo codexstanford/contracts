@@ -1,0 +1,91 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Semantic Rules
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% recommendations
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+recommend_pay(C) :-
+  plan_in_effect(C) &
+  ~excluded(C)
+
+excluded(C) :-
+  exclusion(C, E)
+
+plan_in_effect(C) :-
+  claim.policy(C,P) &
+  claim.hospitalization(C,Z) &
+  policy.startdate(P,PS) &
+  policy.enddate(P,PE) &
+  hospitalization.startdate(Z,ZS) &
+  hospitalization.enddate(Z,ZE) &
+  overlap(PS,PE,ZS,ZE)
+
+exclusion(C, partial_day) :-
+  claim.hospitalization(C,Z) &
+  duration(Z,DURATION) &
+  less(DURATION,86400000)
+
+duration(Z,DURATION) :-
+  hospitalization.startdate(Z,SD) &
+  hospitalization.starttime(Z,ST) &
+  hospitalization.enddate(Z,ED) &
+  hospitalization.endtime(Z,ET) &
+  datetimetotimestamp(SD,ST,SS) &
+  datetimetotimestamp(ED,ET,ES) &
+  evaluate(minus(ES,SS),DURATION)
+
+exclusion(C,4.3m) :- claim.exclusion(C,preexist)
+
+exclusion(C,4.3i) :-
+  claim.hospitalization(C,Z) &
+  hospitalization.cause(Z,X) &
+  accident.activity(X,skydiving)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% insurance-related definitions
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+person.policy(X,Y) :- policy.insuree(Y,X)
+person.policy(X,Y) :- policy.dependent(Y,X)
+
+person.claim(X,Y) :-
+  hospitalization.patient(H,X) &
+  claim.hospitalization(Y,H)
+
+policy.claim(X,Y) :- claim.policy(Y,X)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% general definitions and predefined relations
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+overlap(PS,PE,ZS,ZE) :-
+  evaluate(stringmin(ZS,PE),ZS) &
+  evaluate(stringmin(PS,ZE),PS)
+
+datetimetotimestamp(DATE,TIME,STAMP) :-
+  evaluate(parsedate(DATE),[Y,M,D]) &
+  evaluate(parsetime(TIME),[H,N,S]) &
+  evaluate(maketimestamp(Y,M,D,H,N,S),STAMP)
+
+parsedate(DATE) :=
+  map(readstring,tail(matches(stringify(DATE),"(....)_(..)_(..)")))
+
+parsetime(TIME) :=
+  map(readstring,tail(matches(stringify(TIME),"(..)_(..)_(..)")))
+
+leq(X,Y) :- evaluate(min(X,Y),X)
+less(X,Y) :- evaluate(min(X,Y),X) & distinct(X,Y)
+
+head(X!L) := X
+tail(X!L) := L
+
+%%% number relations, e.g. less, greater
+%%% string relations, e.g. stringappend
+%%% date relations, e.g. dateplus
+%%% and so forth...
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
