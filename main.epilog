@@ -3,12 +3,13 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% recommendations
+%%% basics
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-recommend_pay(C) :-
-  plan_in_effect(C) &
-  ~excluded(C)
+claim.recommendation(Claim, pay) :-
+  plan_in_effect(Claim) &
+  covered(Claim, Reason) &
+  ~excluded(Claim)
 
 excluded(C) :-
   exclusion(C, E)
@@ -22,26 +23,78 @@ plan_in_effect(C) :-
   hospitalization.enddate(Z,ZE) &
   overlap(PS,PE,ZS,ZE)
 
-exclusion(C, partial_day) :-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% coverage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+covered(C, confinement) :-
+  claim.hospitalization(Claim, Hosp) &
+  hospitalization.facility(Hosp, hospital) &
+  hospitalization.cause(Hosp, Cause) &
+  cause.covered(Cause) &
+  duration(Hosp, Duration) &
+  greater(Duration, 82800000)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% exclusions
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+exclusion(C, 2_a_1) :- claim.exclusion(C, preexist)
+exclusion(C, 2_b) :- claim.exclusion(C, sanctions)
+exclusion(C, 2_c) :- claim.exclusion(C, fraud)
+
+% Section D: Excluded causes
+
+exclusion(C, Section) :-
+  claim.hospitalization(C, Z) &
+  excluded_cause(Z, Section)
+
+excluded_cause(Z, 2_d_2) :-
+  hospitalization.cause(Z, routine_newborn)
+excluded_cause(Z, 2_d_3) :-
+  hospitalization.cause(Z, drugs)
+excluded_cause(Z, 2_d_4) :-
+  hospitalization.cause(Z, felony)
+excluded_cause(Z, 2_d_5) :-
+  hospitalization.cause(Z, intoxicated)
+excluded_cause(Z, 2_d_6) :-
+  hospitalization.cause(Z, self_inflicted)
+excluded_cause(Z, 2_d_7) :-
+  hospitalization.cause(Z, dental_non_accident)
+excluded_cause(Z, 2_d_8) :-
+  hospitalization.cause(Z, surgery_not_necessary)
+excluded_cause(Z, 2_d_9) :-
+  hospitalization.cause(Z, war)
+excluded_cause(Z, 2_d_11) :-
+  hospitalization.cause(Z, mental) &
+  ~hospitalization.cause(Z, senility)
+
+% TODO date math is wrong on these two, need intervals of 10 months and a year
+
+exclusion(C, 2_d_1) :-
   claim.hospitalization(C,Z) &
-  duration(Z,DURATION) &
-  less(DURATION,86400000)
+  hospitalization.cause(Z, natal) &
+  ~hospitalization.cause(Z, pregnancy_complication) &
+  claim.policy(C,P) &
+  policy.startdate(P,PS) &
+  datetimetotimestamp(PS, EffectiveTimestamp) &
+  hospitalization.startdate(Z,ZS) &
+  datetimetotimestamp(ZS, HospTimestamp)
+  evaluate(minus(HospTimestamp, EffectiveTimestamp), TimeDelta) &
+  less(TimeDelta, 25920000000) % 300 days
 
-duration(Z,DURATION) :-
-  hospitalization.startdate(Z,SD) &
-  hospitalization.starttime(Z,ST) &
-  hospitalization.enddate(Z,ED) &
-  hospitalization.endtime(Z,ET) &
-  datetimetotimestamp(SD,ST,SS) &
-  datetimetotimestamp(ED,ET,ES) &
-  evaluate(minus(ES,SS),DURATION)
-
-exclusion(C,4.3m) :- claim.exclusion(C,preexist)
-
-exclusion(C,4.3i) :-
+exclusion(C, 2_d_10) :-
   claim.hospitalization(C,Z) &
-  hospitalization.cause(Z,X) &
-  accident.activity(X,skydiving)
+  hospitalization.cause(Z, organ_donation) &
+  claim.policy(C,P) &
+  policy.startdate(P,PS) &
+  datetimetotimestamp(PS, EffectiveTimestamp) &
+  hospitalization.startdate(Z,ZS) &
+  datetimetotimestamp(ZS, HospTimestamp)
+  evaluate(minus(HospTimestamp, EffectiveTimestamp), TimeDelta) &
+  less(TimeDelta, 25920000000) % 365 days
+
+% TODO organ donation in first 12 months
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% insurance-related definitions
@@ -60,6 +113,15 @@ policy.claim(X,Y) :- claim.policy(Y,X)
 %%% general definitions and predefined relations
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+duration(Z,DURATION) :-
+  hospitalization.startdate(Z,SD) &
+  hospitalization.starttime(Z,ST) &
+  hospitalization.enddate(Z,ED) &
+  hospitalization.endtime(Z,ET) &
+  datetimetotimestamp(SD,ST,SS) &
+  datetimetotimestamp(ED,ET,ES) &
+  evaluate(minus(ES,SS),DURATION)
+
 overlap(PS,PE,ZS,ZE) :-
   evaluate(stringmin(ZS,PE),ZS) &
   evaluate(stringmin(PS,ZE),PS)
@@ -75,7 +137,7 @@ parsedate(DATE) :=
 parsetime(TIME) :=
   map(readstring,tail(matches(stringify(TIME),"(..)_(..)_(..)")))
 
-leq(X,Y) :- evaluate(min(X,Y),X)
+greater(X,Y) :- evaluate(min(X,Y),Y) & distinct(X,Y)
 less(X,Y) :- evaluate(min(X,Y),X) & distinct(X,Y)
 
 head(X!L) := X
