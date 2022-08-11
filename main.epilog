@@ -94,8 +94,6 @@ exclusion(C, 2_d_10) :-
   evaluate(minus(HospTimestamp, EffectiveTimestamp), TimeDelta) &
   less(TimeDelta, 25920000000) % 365 days
 
-% TODO organ donation in first 12 months
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% insurance-related definitions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
