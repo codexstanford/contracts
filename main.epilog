@@ -69,30 +69,30 @@ excluded_cause(Z, 2_d_11) :-
   hospitalization.cause(Z, mental) &
   ~hospitalization.cause(Z, senility)
 
-% TODO date math is wrong on these two, need intervals of 10 months and a year
-
+% Routine pregnancy/newborn care in the first 10 months of coverage
 exclusion(C, 2_d_1) :-
   claim.hospitalization(C,Z) &
   hospitalization.cause(Z, natal) &
   ~hospitalization.cause(Z, pregnancy_complication) &
   claim.policy(C,P) &
   policy.startdate(P,PS) &
-  datetimetotimestamp(PS, EffectiveTimestamp) &
+  parsedate(PS, StartDate) &
   hospitalization.startdate(Z,ZS) &
-  datetimetotimestamp(ZS, HospTimestamp)
-  evaluate(minus(HospTimestamp, EffectiveTimestamp), TimeDelta) &
-  less(TimeDelta, 25920000000) % 300 days
+  parsedate(ZS, HospDate) &
+  months_since(StartDate, HospDate, Months) &
+  less(Months, 10)
 
+% Organ donation in the first year of coverage
 exclusion(C, 2_d_10) :-
   claim.hospitalization(C,Z) &
   hospitalization.cause(Z, organ_donation) &
   claim.policy(C,P) &
   policy.startdate(P,PS) &
-  datetimetotimestamp(PS, EffectiveTimestamp) &
+  parsedate(PS, StartDate) &
   hospitalization.startdate(Z,ZS) &
-  datetimetotimestamp(ZS, HospTimestamp)
-  evaluate(minus(HospTimestamp, EffectiveTimestamp), TimeDelta) &
-  less(TimeDelta, 25920000000) % 365 days
+  parsedate(ZS, HospDate) &
+  months_since(StartDate, HospDate, Months) &
+  less(Months, 12)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% insurance-related definitions
@@ -134,6 +134,21 @@ parsedate(DATE) :=
 
 parsetime(TIME) :=
   map(readstring,tail(matches(stringify(TIME),"(..)_(..)_(..)")))
+
+% `Months` is the number of complete months that have passed between two dates. 
+months_since([SinceYear, SinceMonth, SinceDay], [TargetYear, TargetMonth, TargetDay], Months) :-
+  evaluate(minus(TargetYear, SinceYear), YearDifference) &
+  evaluate(minus(TargetMonth, SinceMonth), MonthDifference) &
+  evaluate(minus(TargetDay, SinceDay), DayDifference) &
+  day_modifier(DayDifference, DayModifier) &
+  evaluate(plus(times(YearDifference, 12), MonthDifference, DayModifier), Months)
+
+% n.b. I assume a complete month has not passed until the *end* of the
+% same-numbered day the next month. This is going to vary across jurisdictions
+day_modifier(DayDifference, 0) :-
+  evaluate(min(DayDifference, 1), 1)
+day_modifier(DayDifference, -1) :-
+  evaluate(max(DayDifference, 0), 0)
 
 greater(X,Y) :- evaluate(min(X,Y),Y) & distinct(X,Y)
 less(X,Y) :- evaluate(min(X,Y),X) & distinct(X,Y)
