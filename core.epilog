@@ -1,0 +1,70 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% insurance-related definitions
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+person.policy(X,Y) :- policy.insuree(Y,X)
+person.policy(X,Y) :- policy.dependent(Y,X)
+
+person.claim(X,Y) :-
+  hospitalization.patient(H,X) &
+  claim.hospitalization(Y,H)
+
+policy.claim(X,Y) :- claim.policy(Y,X)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% general definitions and predefined relations
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+duration(Z,DURATION) :-
+  hospitalization.startdate(Z,SD) &
+  hospitalization.starttime(Z,ST) &
+  hospitalization.enddate(Z,ED) &
+  hospitalization.endtime(Z,ET) &
+  datetimetotimestamp(SD,ST,SS) &
+  datetimetotimestamp(ED,ET,ES) &
+  evaluate(minus(ES,SS),DURATION)
+
+overlap(PS,PE,ZS,ZE) :-
+  evaluate(stringmin(ZS,PE),ZS) &
+  evaluate(stringmin(PS,ZE),PS)
+
+datetimetotimestamp(DATE,TIME,STAMP) :-
+  evaluate(parsedate(DATE),[Y,M,D]) &
+  evaluate(parsetime(TIME),[H,N,S]) &
+  evaluate(maketimestamp(Y,M,D,H,N,S),STAMP)
+
+parsedate(DATE) :=
+  map(readstring,tail(matches(stringify(DATE),"(....)_(..)_(..)")))
+
+parsetime(TIME) :=
+  map(readstring,tail(matches(stringify(TIME),"(..)_(..)_(..)")))
+
+% `Months` is the number of complete months that have passed between two dates. 
+months_since([SinceYear, SinceMonth, SinceDay], [TargetYear, TargetMonth, TargetDay], Months) :-
+  evaluate(minus(TargetYear, SinceYear), YearDifference) &
+  evaluate(minus(TargetMonth, SinceMonth), MonthDifference) &
+  evaluate(minus(TargetDay, SinceDay), DayDifference) &
+  day_modifier(DayDifference, DayModifier) &
+  evaluate(plus(times(YearDifference, 12), MonthDifference, DayModifier), Months)
+
+% n.b. I assume a complete month has not passed until the *end* of the
+% same-numbered day the next month. This is going to vary across jurisdictions
+day_modifier(DayDifference, 0) :-
+  evaluate(min(DayDifference, 1), 1)
+day_modifier(DayDifference, -1) :-
+  evaluate(max(DayDifference, 0), 0)
+
+greater(X,Y) :- evaluate(min(X,Y),Y) & distinct(X,Y)
+less(X,Y) :- evaluate(min(X,Y),X) & distinct(X,Y)
+
+head(X!L) := X
+tail(X!L) := L
+
+%%% number relations, e.g. less, greater
+%%% string relations, e.g. stringappend
+%%% date relations, e.g. dateplus
+%%% and so forth...
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
