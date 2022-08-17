@@ -23,13 +23,15 @@ plan_in_effect(C) :-
 %%% benefits
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-covered(Claim, Amount, confinement) :-
+covered(Claim, confinement) :-
   claim.hospitalization(Claim, Hosp) &
-  hospitalization.facility(Hosp, hospital) &
-  claim.policy(C, P) &
-  policy.payouts_ytd(P, PayoutsYtd) &
-  evaluate(minus(27000, PayoutsYtd), BenefitBankRemaining) &
-  evaluate(min(BenefitBankRemaining, 900), Amount)
+  hospitalization.facility(Hosp, hospital)
+
+% TODO think more about limits
+%  claim.policy(C, P) &
+%  policy.payouts_ytd(P, PayoutsYtd) &
+%  evaluate(minus(27000, PayoutsYtd), BenefitBankRemaining) &
+%  evaluate(min(BenefitBankRemaining, 900), Amount)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% exclusions
