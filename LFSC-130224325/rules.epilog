@@ -1,0 +1,87 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% basics
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+claim.recommendation(Claim, pay) :-
+  plan_in_effect(Claim) &
+  covered(Claim, Reason) &
+  ~excluded(Claim)
+
+excluded(C) :-
+  exclusion(C, E)
+
+plan_in_effect(C) :-
+  claim.policy(C,P) &
+  claim.hospitalization(C,Z) &
+  policy.startdate(P,PS) &
+  policy.enddate(P,PE) &
+  hospitalization.startdate(Z,ZS) &
+  hospitalization.enddate(Z,ZE) &
+  overlap(PS,PE,ZS,ZE)
+
+% TODO diagnostic exam benefit
+% TODO rehab benefit
+% TODO ER benefit
+% TODO ambulance benefit
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% exclusions
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Care provided outside USA and Canada
+exclusion(C, geographic) :-
+  claim.hospitalization(C, Z) &
+  ~hospitalization.country(Z, canada) &
+  ~hospitalization.country(Z, usa)
+
+% Care for pre-existing condition in first 6 months of coverage
+% TODO exact language: "Care or treatment caused by a Pre-Existing Condition will not be covered
+% unless it begins more than 6 months after the Policy Effective Date."
+% So... beginning of *treatment* might be different from beginning of *hospitalization*. Does that
+% matter? What exactly does it mean for "treatment" to "begin"? If I'm prescribed medication for a
+% PEC 5 months into my policy and hospitalized for it 7 months in, is the hospitalization covered?
+exclusion(C, preexist) :-
+  claim.hospitalization(C, Z) &
+  hospitalization.cause(Z, preexist) &
+  claim.policy(C, P) &
+  policy.startdate(P, PS) &
+  parsedate(PS, StartDate) &
+  hospitalization.startdate(Z, ZS) &
+  parsedate(ZS, HospDate) &
+  months_since(StartDate, HospDate, Months) &
+  less(Months, 6)
+
+% Routine pregnancy care
+exclusion(C, pregnancy_routine) :-
+  claim.hospitalization(C,Z) &
+  hospitalization.cause(Z, pregnancy) &
+  ~hospitalization.cause(Z, pregnancy_complication)
+
+% Always excluded causes
+
+exclusion(C, Cause) :-
+  claim.hospitalization(C, Z) &
+  hospitalization.cause(Z, Cause) &
+  excluded_cause(Cause)
+
+excluded_cause(aircraft_operation)
+excluded_cause(hang_gliding)
+excluded_cause(hot_air_ballooning)
+excluded_cause(bungee_jumping)
+excluded_cause(parachuting)
+excluded_cause(scuba_diving)
+excluded_cause(sail_gliding)
+excluded_cause(parasailing)
+excluded_cause(racing)
+excluded_cause(stunt_driving)
+excluded_cause(speed_testing)
+excluded_cause(professional_athletics)
+excluded_cause(war) % TODO there are some subtleties here
+excluded_cause(felony)
+excluded_cause(cosmetic)
+excluded_cause(elective) % TODO compare to surgery_not_necessary from Aflac
+excluded_cause(suicide_attempt)
+excluded_cause(self_inflicted)
+excluded_cause(drugs) % TODO subtleties. compare to Aflac
+excluded_cause(mental)
+excluded_cause(addiction)
