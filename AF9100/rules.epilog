@@ -43,27 +43,8 @@ exclusion(C, 2_c) :- claim.exclusion(C, fraud)
 
 exclusion(C, Section) :-
   claim.hospitalization(C, Z) &
-  excluded_cause(Z, Section)
-
-excluded_cause(Z, 2_d_2) :-
-  hospitalization.cause(Z, routine_newborn)
-excluded_cause(Z, 2_d_3) :-
-  hospitalization.cause(Z, drugs)
-excluded_cause(Z, 2_d_4) :-
-  hospitalization.cause(Z, felony)
-excluded_cause(Z, 2_d_5) :-
-  hospitalization.cause(Z, intoxicated)
-excluded_cause(Z, 2_d_6) :-
-  hospitalization.cause(Z, self_inflicted)
-excluded_cause(Z, 2_d_7) :-
-  hospitalization.cause(Z, dental_non_accident)
-excluded_cause(Z, 2_d_8) :-
-  hospitalization.cause(Z, surgery_not_necessary)
-excluded_cause(Z, 2_d_9) :-
-  hospitalization.cause(Z, war)
-excluded_cause(Z, 2_d_11) :-
-  hospitalization.cause(Z, mental) &
-  ~hospitalization.cause(Z, senility)
+  hospitalization.cause(Z, Cause) &
+  excluded_cause(Cause, Section)
 
 % Routine pregnancy/newborn care in the first 10 months of coverage
 exclusion(C, 2_d_1) :-
@@ -78,6 +59,15 @@ exclusion(C, 2_d_1) :-
   months_since(StartDate, HospDate, Months) &
   less(Months, 10)
 
+excluded_cause(routine_newborn, 2_d_2)
+excluded_cause(drugs, 2_d_3)
+excluded_cause(felony, 2_d_4)
+excluded_cause(intoxicated, 2_d_5)
+excluded_cause(self_inflicted, 2_d_6)
+excluded_cause(dental_non_accident, 2_d_7)
+excluded_cause(surgery_not_necessary, 2_d_8)
+excluded_cause(war, 2_d_9)
+
 % Organ donation in the first year of coverage
 exclusion(C, 2_d_10) :-
   claim.hospitalization(C,Z) &
@@ -89,3 +79,8 @@ exclusion(C, 2_d_10) :-
   parsedate(ZS, HospDate) &
   months_since(StartDate, HospDate, Months) &
   less(Months, 12)
+
+exclusion(C, 2_d_11) :-
+  claim.hospitalization(C, Z) &
+  hospitalization.cause(Z, mental) &
+  ~hospitalization.cause(Z, senility)
