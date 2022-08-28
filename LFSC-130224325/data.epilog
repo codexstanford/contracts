@@ -1,0 +1,8 @@
+claim(claim1)
+claim.policy(claim1, policy1)
+claim.hospitalization(claim1, hosp1)
+
+policy(policy1)
+
+hospitalization(hosp1)
+hospitalization.cause(hosp1, racing)
