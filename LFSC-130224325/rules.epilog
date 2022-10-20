@@ -23,6 +23,9 @@ plan_in_effect(C) :-
 %%% benefits
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+covered(Situation) :-
+  "Situation.event"(Situation, hospitalization)
+
 covered(Claim, confinement) :-
   claim.hospitalization(Claim, Hosp) &
   hospitalization.facility(Hosp, hospital)
@@ -37,11 +40,18 @@ covered(Claim, confinement) :-
 %%% exclusions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+type(exclusion_payout, "InsurancePayout")
+"InsurancePayout.payoutType"(exclusion_payout, exclusion)
+
+type(hosp_pattern, "Situation")
+"Situation.event"(hosp_pattern, hospitalization)
+
 % Care provided outside USA and Canada
-exclusion(C, geographic) :-
-  claim.hospitalization(C, Z) &
-  ~hospitalization.country(Z, canada) &
-  ~hospitalization.country(Z, usa)
+coverage(History, exclusion_payout) :-
+  risk_chain_matches([risk_chain.wildcard, hosp_pattern], History) &
+  % how do we get Hospitalization?
+  ~"Situation.location"(Hospitalization, canada) &
+  ~"Situation.location"(Hospitalization, usa)
 
 % Care for pre-existing condition in first 6 months of coverage
 % TODO exact language: "Care or treatment caused by a Pre-Existing Condition will not be covered
@@ -60,18 +70,14 @@ exclusion(C, preexist) :-
   months_since(StartDate, HospDate, Months) &
   less(Months, 6)
 
-% Routine pregnancy care
-exclusion(C, pregnancy_routine) :-
-  claim.hospitalization(C,Z) &
-  hospitalization.cause(Z, pregnancy) &
-  ~hospitalization.cause(Z, pregnancy_complication)
-
 % Always excluded causes
 
-exclusion(C, Cause) :-
-  claim.hospitalization(C, Z) &
-  hospitalization.cause(Z, Cause) &
-  excluded_cause(Cause)
+coverage([Cause, Hospitalization], exclusion_payout) :-
+  type(Hospitalization, "Situation") &
+  "Situation.event"(Hospitalization, "hospitalization") &
+  type(Cause, "Situation") &
+  "Situation.event"(Cause, Event) &
+  excluded_cause(Event)
 
 excluded_cause(aircraft_operation)
 excluded_cause(hang_gliding)
@@ -81,6 +87,7 @@ excluded_cause(parachuting)
 excluded_cause(scuba_diving)
 excluded_cause(sail_gliding)
 excluded_cause(parasailing)
+excluded_cause(pregnancy_routine)
 excluded_cause(racing)
 excluded_cause(stunt_driving)
 excluded_cause(speed_testing)
@@ -94,3 +101,29 @@ excluded_cause(self_inflicted)
 excluded_cause(drugs) % TODO subtleties. compare to Aflac
 excluded_cause(mental)
 excluded_cause(addiction)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% utilities
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% TODO ask PD. For now just check the event is the same
+situation_matches(Pattern, Instance) :-
+  "Situation.event"(Pattern, Event) &
+  "Situation.event"(Instance, Event)
+
+% Risk chain matching
+
+% Empty chains match
+risk_chain_matches([], [])
+
+% Matching concrete head situations
+risk_chain_matches(PatternHead!PatternTail, InstanceHead!InstanceTail) :-
+  situation_matches(PatternHead, InstanceHead) &
+  risk_chain_matches(PatternTail, InstanceTail)
+
+% A pattern starting with a wildcard matches any instance that has some suffix
+% matching the post-wildcard pattern.
+risk_chain_matches(risk_chain.wildcard!PatternTail, Instance) :-
+  risk_chain_matches(PatternTail, Instance)
+risk_chain_matches(risk_chain.wildcard!PatternTail, _!InstanceTail) :-
+  risk_chain_matches(risk_chain.wildcard!PatternTail, InstanceTail)
