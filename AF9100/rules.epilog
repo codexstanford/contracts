@@ -24,7 +24,7 @@ covered(af9100, Hospitalization, confinement) :-
 exclusion(af9100, Hospitalization, not_in_effect) :-
   hospitalization.startdate(Hospitalization, End) &
   hospitalization.enddate(Hospitalization, Start) &
-  policy_in_effect(Policy, Start, End)
+  policy_in_effect(af9100, Start, End)
 
 exclusion(af9100, Hospitalization, short) :-
   duration(Hospitalization, Duration) &
