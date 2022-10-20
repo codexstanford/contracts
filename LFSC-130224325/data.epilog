@@ -1,8 +1,7 @@
-claim(claim1)
-claim.policy(claim1, policy1)
-claim.hospitalization(claim1, hosp1)
-
-policy(policy1)
+policy(lfsc)
+policy.startdate(lfsc, 2021_01_01)
+policy.enddate(lfsc, 2021_12_31)
 
 hospitalization(hosp1)
+hospitalization.facility(hosp1, hospital)
 hospitalization.cause(hosp1, racing)
