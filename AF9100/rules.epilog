@@ -30,18 +30,19 @@ exclusion(af9100, Hospitalization, short) :-
   duration(Hospitalization, Duration) &
   less(Duration, 82800000)
 
+exclusion(af9100, Hospitalization, Section) :-
+  hospitalization.cause(Hospitalization, Cause) &
+  excluded_cause(Cause, Section)
+
+excluded_cause(preexist, 2_a_1)
+
 % Not sure what to do with these exclusions that are about factors external to
 % the policy and the hospitalization. Maybe we do need to model claims
 % explicitly.
-exclusion(af9100, _, 2_a_1) :- preexist
 exclusion(af9100, _, 2_b) :- sanctions
 exclusion(af9100, _, 2_c) :- fraud
 
 % Section D: Excluded causes
-
-exclusion(af9100, Hospitalization, Section) :-
-  hospitalization.cause(Hospitalization, Cause) &
-  excluded_cause(Cause, Section)
 
 % Routine pregnancy/newborn care in the first 10 months of coverage
 exclusion(af9100, Hospitalization, 2_d_1) :-

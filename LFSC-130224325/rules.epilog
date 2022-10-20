@@ -2,33 +2,19 @@
 %%% basics
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-claim.recommendation(Claim, pay) :-
-  plan_in_effect(Claim) &
-  covered(Claim, Reason) &
-  ~excluded(Claim)
+covers(lfsc, Hospitalization) :-
+  covered(lfsc, Hospitalization, Reason) &
+  ~excluded(lfsc, Hospitalization)
 
-excluded(C) :-
-  exclusion(C, E)
-
-plan_in_effect(C) :-
-  claim.policy(C,P) &
-  claim.hospitalization(C,Z) &
-  policy.startdate(P,PS) &
-  policy.enddate(P,PE) &
-  hospitalization.startdate(Z,ZS) &
-  hospitalization.enddate(Z,ZE) &
-  overlap(PS,PE,ZS,ZE)
+excluded(lfsc, Z) :-
+  exclusion(lfsc, Z, E)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% benefits
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-covered(Situation) :-
-  "Situation.event"(Situation, hospitalization)
-
-covered(Claim, confinement) :-
-  claim.hospitalization(Claim, Hosp) &
-  hospitalization.facility(Hosp, hospital)
+covered(lfsc, Hospitalization, confinement) :-
+  hospitalization.facility(Hospitalization, hospital)
 
 % TODO think more about limits
 %  claim.policy(C, P) &
@@ -40,18 +26,17 @@ covered(Claim, confinement) :-
 %%% exclusions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-type(exclusion_payout, "InsurancePayout")
-"InsurancePayout.payoutType"(exclusion_payout, exclusion)
-
-type(hosp_pattern, "Situation")
-"Situation.event"(hosp_pattern, hospitalization)
+exclusion(lfsc, Hospitalization, not_in_effect) :-
+  hospitalization.startdate(Hospitalization, End) &
+  hospitalization.enddate(Hospitalization, Start) &
+  policy_in_effect(lfsc, Start, End)
 
 % Care provided outside USA and Canada
-coverage(History, exclusion_payout) :-
-  risk_chain_matches([risk_chain.wildcard, hosp_pattern], History) &
-  % how do we get Hospitalization?
-  ~"Situation.location"(Hospitalization, canada) &
-  ~"Situation.location"(Hospitalization, usa)
+exclusion(lfsc, Hospitalization, geographic) :-
+  hospitalization.hospital(Hospitalization, Hospital) &
+  hospital.country(Hospital, Country) &
+  distinct(country, usa) &
+  distinct(country, canada)
 
 % Care for pre-existing condition in first 6 months of coverage
 % TODO exact language: "Care or treatment caused by a Pre-Existing Condition will not be covered
@@ -59,25 +44,20 @@ coverage(History, exclusion_payout) :-
 % So... beginning of *treatment* might be different from beginning of *hospitalization*. Does that
 % matter? What exactly does it mean for "treatment" to "begin"? If I'm prescribed medication for a
 % PEC 5 months into my policy and hospitalized for it 7 months in, is the hospitalization covered?
-exclusion(C, preexist) :-
-  claim.hospitalization(C, Z) &
-  hospitalization.cause(Z, preexist) &
-  claim.policy(C, P) &
-  policy.startdate(P, PS) &
+exclusion(lfsc, Hospitalization, preexist) :-
+  hospitalization.cause(Hospitalization, preexist) &
+  policy.startdate(lfsc, PS) &
   parsedate(PS, StartDate) &
-  hospitalization.startdate(Z, ZS) &
+  hospitalization.startdate(Hospitalization, ZS) &
   parsedate(ZS, HospDate) &
   months_since(StartDate, HospDate, Months) &
   less(Months, 6)
 
 % Always excluded causes
 
-coverage([Cause, Hospitalization], exclusion_payout) :-
-  type(Hospitalization, "Situation") &
-  "Situation.event"(Hospitalization, "hospitalization") &
-  type(Cause, "Situation") &
-  "Situation.event"(Cause, Event) &
-  excluded_cause(Event)
+exclusion(lfsc, Hospitalization, Cause) :-
+  hospitalization.cause(Hospitalization, Cause) &
+  excluded_cause(Cause)
 
 excluded_cause(aircraft_operation)
 excluded_cause(hang_gliding)
@@ -101,29 +81,3 @@ excluded_cause(self_inflicted)
 excluded_cause(drugs) % TODO subtleties. compare to Aflac
 excluded_cause(mental)
 excluded_cause(addiction)
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% utilities
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% TODO ask PD. For now just check the event is the same
-situation_matches(Pattern, Instance) :-
-  "Situation.event"(Pattern, Event) &
-  "Situation.event"(Instance, Event)
-
-% Risk chain matching
-
-% Empty chains match
-risk_chain_matches([], [])
-
-% Matching concrete head situations
-risk_chain_matches(PatternHead!PatternTail, InstanceHead!InstanceTail) :-
-  situation_matches(PatternHead, InstanceHead) &
-  risk_chain_matches(PatternTail, InstanceTail)
-
-% A pattern starting with a wildcard matches any instance that has some suffix
-% matching the post-wildcard pattern.
-risk_chain_matches(risk_chain.wildcard!PatternTail, Instance) :-
-  risk_chain_matches(PatternTail, Instance)
-risk_chain_matches(risk_chain.wildcard!PatternTail, _!InstanceTail) :-
-  risk_chain_matches(risk_chain.wildcard!PatternTail, InstanceTail)
