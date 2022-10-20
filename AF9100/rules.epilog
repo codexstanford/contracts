@@ -2,59 +2,54 @@
 %%% basics
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-claim.recommendation(Claim, pay) :-
-  plan_in_effect(Claim) &
-  covered(Claim, Reason) &
-  ~excluded(Claim)
+covers(af9100, Policy, Hospitalization) :-
+  covered(af9100, Policy, Hospitalization, Reason) &
+  ~excluded(af9100, Policy, Hospitalization)
 
-excluded(C) :-
-  exclusion(C, E)
-
-plan_in_effect(C) :-
-  claim.policy(C,P) &
-  claim.hospitalization(C,Z) &
-  policy.startdate(P,PS) &
-  policy.enddate(P,PE) &
-  hospitalization.startdate(Z,ZS) &
-  hospitalization.enddate(Z,ZE) &
-  overlap(PS,PE,ZS,ZE)
+excluded(af9100, Policy, Hospitalization) :-
+  exclusion(af9100, Policy, Hospitalization, E)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% coverage
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-covered(C, confinement) :-
-  claim.hospitalization(Claim, Hosp) &
-  hospitalization.facility(Hosp, hospital) &
-  hospitalization.cause(Hosp, Cause) &
-  cause.covered(Cause) &
-  duration(Hosp, Duration) &
-  greater(Duration, 82800000)
+% Cover hospital confinement by default, but many exceptions coming
+covered(af9100, _, Hospitalization, confinement) :-
+  hospitalization.facility(Hospitalization, hospital)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% exclusions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-exclusion(C, 2_a_1) :- claim.exclusion(C, preexist)
-exclusion(C, 2_b) :- claim.exclusion(C, sanctions)
-exclusion(C, 2_c) :- claim.exclusion(C, fraud)
+exclusion(af9100, Policy, Hospitalization, not_in_effect) :-
+  hospitalization.startdate(Hospitalization, End) &
+  hospitalization.enddate(Hospitalization, Start) &
+  policy_in_effect(Policy, Start, End)
+
+exclusion(af9100, _, Hospitalization, short) :-
+  duration(Hospitalization, Duration) &
+  less(Duration, 82800000)
+
+% Not sure what to do with these exclusions that are about factors external to
+% the policy and the hospitalization. Maybe we do need to model claims
+% explicitly.
+exclusion(af9100, _, _, 2_a_1) :- preexist
+exclusion(af9100, _, _, 2_b) :- sanctions
+exclusion(af9100, _, _, 2_c) :- fraud
 
 % Section D: Excluded causes
 
-exclusion(C, Section) :-
-  claim.hospitalization(C, Z) &
-  hospitalization.cause(Z, Cause) &
+exclusion(af9100, _, Hospitalization, Section) :-
+  hospitalization.cause(Hospitalization, Cause) &
   excluded_cause(Cause, Section)
 
 % Routine pregnancy/newborn care in the first 10 months of coverage
-exclusion(C, 2_d_1) :-
-  claim.hospitalization(C,Z) &
-  hospitalization.cause(Z, natal) &
-  ~hospitalization.cause(Z, pregnancy_complication) &
-  claim.policy(C,P) &
-  policy.startdate(P,PS) &
+exclusion(af9100, Policy, Hospitalization, 2_d_1) :-
+  hospitalization.cause(Hospitalization, natal) &
+  ~hospitalization.cause(Hospitalization, pregnancy_complication) &
+  policy.startdate(Policy,PS) &
   parsedate(PS, StartDate) &
-  hospitalization.startdate(Z,ZS) &
+  hospitalization.startdate(Hospitalization,ZS) &
   parsedate(ZS, HospDate) &
   months_since(StartDate, HospDate, Months) &
   less(Months, 10)
@@ -69,18 +64,16 @@ excluded_cause(surgery_not_necessary, 2_d_8)
 excluded_cause(war, 2_d_9)
 
 % Organ donation in the first year of coverage
-exclusion(C, 2_d_10) :-
-  claim.hospitalization(C,Z) &
-  hospitalization.cause(Z, organ_donation) &
+exclusion(af9100, Policy, Hospitalization, 2_d_10) :-
+  hospitalization.cause(Hospitalization, organ_donation) &
   claim.policy(C,P) &
-  policy.startdate(P,PS) &
+  policy.startdate(Policy,PS) &
   parsedate(PS, StartDate) &
-  hospitalization.startdate(Z,ZS) &
+  hospitalization.startdate(Hospitalization,ZS) &
   parsedate(ZS, HospDate) &
   months_since(StartDate, HospDate, Months) &
   less(Months, 12)
 
-exclusion(C, 2_d_11) :-
-  claim.hospitalization(C, Z) &
-  hospitalization.cause(Z, mental) &
-  ~hospitalization.cause(Z, senility)
+exclusion(af9100, _, Hospitalization, 2_d_11) :-
+  hospitalization.cause(Hospitalization, mental) &
+  ~hospitalization.cause(Hospitalization, senility)

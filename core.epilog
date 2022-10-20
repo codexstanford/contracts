@@ -11,6 +11,11 @@ person.claim(X,Y) :-
 
 policy.claim(X,Y) :- claim.policy(Y,X)
 
+policy_in_effect(Policy, StartDate, EndDate) :-
+  policy.startdate(Policy, PStart) &
+  policy.enddate(Policy, PEnd) &
+  overlap(PStart, PEnd, StartDate, EndDate)
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% general definitions and predefined relations
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
