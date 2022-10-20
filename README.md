@@ -2,6 +2,19 @@
 
 Sample insurance contracts providing hospital cash benefits, for use in [CodeX's IPM prototype](http://insurance.stanford.edu/insurance/hospitalcash/).
 
+## Structure
+
+`core.epilog` contains common rules shared between contracts.
+
+`metadata.epilog` describes the expected input data.
+
+`templates.epilog` contains templates for generating English from query results.
+
+Each subfolder corresponds to a particular contract, containing:
+- One or more PDFs that contain the actual contract provisions in natural language
+- `rules.epilog`, where the rules representing the contract are encoded
+- `data.epilog` (maybe), which contains a sample data set
+
 ## Questions
 
 How should we characterize the relationship between actual policies, as in the actual agreement between insurer and insuree, versus prototypical "form" policies, e.g. AF9100CA? It would be nice to be able to write `covers(af9100, Hospitalization)`, but we can't actually do that, because whether *your particular* AF9100CA covers a hospitalization depends on when you signed it. I see a few options:
