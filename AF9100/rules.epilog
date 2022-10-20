@@ -2,52 +2,52 @@
 %%% basics
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-covers(af9100, Policy, Hospitalization) :-
-  covered(af9100, Policy, Hospitalization, Reason) &
-  ~excluded(af9100, Policy, Hospitalization)
+covers(af9100, Hospitalization) :-
+  covered(af9100, Hospitalization, Reason) &
+  ~excluded(af9100, Hospitalization)
 
-excluded(af9100, Policy, Hospitalization) :-
-  exclusion(af9100, Policy, Hospitalization, E)
+excluded(af9100, Hospitalization) :-
+  exclusion(af9100, Hospitalization, E)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% coverage
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Cover hospital confinement by default, but many exceptions coming
-covered(af9100, _, Hospitalization, confinement) :-
+covered(af9100, Hospitalization, confinement) :-
   hospitalization.facility(Hospitalization, hospital)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% exclusions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-exclusion(af9100, Policy, Hospitalization, not_in_effect) :-
+exclusion(af9100, Hospitalization, not_in_effect) :-
   hospitalization.startdate(Hospitalization, End) &
   hospitalization.enddate(Hospitalization, Start) &
   policy_in_effect(Policy, Start, End)
 
-exclusion(af9100, _, Hospitalization, short) :-
+exclusion(af9100, Hospitalization, short) :-
   duration(Hospitalization, Duration) &
   less(Duration, 82800000)
 
 % Not sure what to do with these exclusions that are about factors external to
 % the policy and the hospitalization. Maybe we do need to model claims
 % explicitly.
-exclusion(af9100, _, _, 2_a_1) :- preexist
-exclusion(af9100, _, _, 2_b) :- sanctions
-exclusion(af9100, _, _, 2_c) :- fraud
+exclusion(af9100, _, 2_a_1) :- preexist
+exclusion(af9100, _, 2_b) :- sanctions
+exclusion(af9100, _, 2_c) :- fraud
 
 % Section D: Excluded causes
 
-exclusion(af9100, _, Hospitalization, Section) :-
+exclusion(af9100, Hospitalization, Section) :-
   hospitalization.cause(Hospitalization, Cause) &
   excluded_cause(Cause, Section)
 
 % Routine pregnancy/newborn care in the first 10 months of coverage
-exclusion(af9100, Policy, Hospitalization, 2_d_1) :-
+exclusion(af9100, Hospitalization, 2_d_1) :-
   hospitalization.cause(Hospitalization, natal) &
   ~hospitalization.cause(Hospitalization, pregnancy_complication) &
-  policy.startdate(Policy,PS) &
+  policy.startdate(af9100, PS) &
   parsedate(PS, StartDate) &
   hospitalization.startdate(Hospitalization,ZS) &
   parsedate(ZS, HospDate) &
@@ -64,16 +64,15 @@ excluded_cause(surgery_not_necessary, 2_d_8)
 excluded_cause(war, 2_d_9)
 
 % Organ donation in the first year of coverage
-exclusion(af9100, Policy, Hospitalization, 2_d_10) :-
+exclusion(af9100, Hospitalization, 2_d_10) :-
   hospitalization.cause(Hospitalization, organ_donation) &
-  claim.policy(C,P) &
-  policy.startdate(Policy,PS) &
+  policy.startdate(af9100, PS) &
   parsedate(PS, StartDate) &
   hospitalization.startdate(Hospitalization,ZS) &
   parsedate(ZS, HospDate) &
   months_since(StartDate, HospDate, Months) &
   less(Months, 12)
 
-exclusion(af9100, _, Hospitalization, 2_d_11) :-
+exclusion(af9100, Hospitalization, 2_d_11) :-
   hospitalization.cause(Hospitalization, mental) &
   ~hospitalization.cause(Hospitalization, senility)
