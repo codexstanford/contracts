@@ -34,7 +34,15 @@ exclusion(af9100, Hospitalization, Section) :-
   hospitalization.cause(Hospitalization, Cause) &
   excluded_cause(Cause, Section)
 
-excluded_cause(preexist, 2_a_1)
+% Care for pre-existing condition in first 12 months of coverage
+exclusion(lfsc, Hospitalization, 2_a_1) :-
+  hospitalization.cause(Hospitalization, preexist) &
+  policy.startdate(lfsc, PS) &
+  parsedate(PS, StartDate) &
+  hospitalization.startdate(Hospitalization, ZS) &
+  parsedate(ZS, HospDate) &
+  months_since(StartDate, HospDate, Months) &
+  less(Months, 12)
 
 % Not sure what to do with these exclusions that are about factors external to
 % the policy and the hospitalization. Maybe we do need to model claims
