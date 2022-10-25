@@ -54,8 +54,7 @@ exclusion(af9100, _, 2_c) :- fraud
 
 % Routine pregnancy/newborn care in the first 10 months of coverage
 exclusion(af9100, Hospitalization, 2_d_1) :-
-  hospitalization.cause(Hospitalization, natal) &
-  ~hospitalization.cause(Hospitalization, pregnancy_complication) &
+  hospitalization.cause(Hospitalization, pregnancy_routine) &
   policy.startdate(af9100, PS) &
   parsedate(PS, StartDate) &
   hospitalization.startdate(Hospitalization,ZS) &
