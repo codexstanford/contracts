@@ -35,7 +35,7 @@ exclusion(af9100, Hospitalization, Section) :-
   excluded_cause(Cause, Section)
 
 % Care for pre-existing condition in first 12 months of coverage
-exclusion(lfsc, Hospitalization, 2_a_1) :-
+exclusion(af9100, Hospitalization, 2_a_1) :-
   hospitalization.cause(Hospitalization, preexist) &
   policy.startdate(lfsc, PS) &
   parsedate(PS, StartDate) &
