@@ -20,6 +20,13 @@ policy_in_effect(Policy, StartDate, EndDate) :-
 %%% general definitions and predefined relations
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% A is caused by B which is caused by C -> A is caused by C
+eventual_cause(Event, Eventual) :-
+  cause(Event, Eventual)
+eventual_cause(Event, Eventual) :-
+  cause(Event, Cause) &
+  eventual_cause(Cause, Eventual)
+
 duration(Z,DURATION) :-
   hospitalization.startdate(Z,SD) &
   hospitalization.starttime(Z,ST) &
