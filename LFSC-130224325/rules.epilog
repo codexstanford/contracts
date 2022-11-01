@@ -27,8 +27,8 @@ covered(lfsc, Hospitalization, confinement) :-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 exclusion(lfsc, Hospitalization, not_in_effect) :-
-  hospitalization.startdate(Hospitalization, End) &
-  hospitalization.enddate(Hospitalization, Start) &
+  hospitalization.startdate(Hospitalization, Start) &
+  hospitalization.enddate(Hospitalization, End) &
   policy_in_effect(lfsc, Start, End)
 
 % Care provided outside USA and Canada
@@ -47,9 +47,9 @@ exclusion(lfsc, Hospitalization, geographic) :-
 exclusion(lfsc, Hospitalization, preexist) :-
   eventually_caused_by_type(Hospitalization, preexist) &
   policy.startdate(lfsc, PS) &
-  parsedate(PS, StartDate) &
+  evaluate(parsedate(PS), StartDate) &
   hospitalization.startdate(Hospitalization, ZS) &
-  parsedate(ZS, HospDate) &
+  evaluate(parsedate(ZS), HospDate) &
   months_since(StartDate, HospDate, Months) &
   less(Months, 6)
 
