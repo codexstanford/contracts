@@ -45,7 +45,7 @@ exclusion(lfsc, Hospitalization, geographic) :-
 % matter? What exactly does it mean for "treatment" to "begin"? If I'm prescribed medication for a
 % PEC 5 months into my policy and hospitalized for it 7 months in, is the hospitalization covered?
 exclusion(lfsc, Hospitalization, preexist) :-
-  hospitalization.cause(Hospitalization, preexist) &
+  eventually_caused_by_type(Hospitalization, preexist) &
   policy.startdate(lfsc, PS) &
   parsedate(PS, StartDate) &
   hospitalization.startdate(Hospitalization, ZS) &
@@ -56,7 +56,7 @@ exclusion(lfsc, Hospitalization, preexist) :-
 % Always excluded causes
 
 exclusion(lfsc, Hospitalization, Cause) :-
-  hospitalization.cause(Hospitalization, Cause) &
+  eventually_caused_by_type(Hospitalization, Cause) &
   excluded_cause(Cause)
 
 excluded_cause(aircraft_operation)
@@ -81,3 +81,11 @@ excluded_cause(self_inflicted)
 excluded_cause(drugs) % TODO subtleties. compare to Aflac
 excluded_cause(mental)
 excluded_cause(addiction)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% util
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+eventually_caused_by_type(Event, Type) :-
+  eventual_cause(Event, Cause) &
+  type(Cause, Type)
