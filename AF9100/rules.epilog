@@ -37,7 +37,7 @@ exclusion(af9100, Hospitalization, Section) :-
 % Care for pre-existing condition in first 12 months of coverage
 exclusion(af9100, Hospitalization, 2_a_1) :-
   eventual_cause_type(Hospitalization, preexist) &
-  policy.startdate(lfsc, PS) &
+  policy.startdate(af9100, PS) &
   evaluate(parsedate(PS), StartDate) &
   hospitalization.startdate(Hospitalization, ZS) &
   evaluate(parsedate(ZS), HospDate) &

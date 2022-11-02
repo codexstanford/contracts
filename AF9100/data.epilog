@@ -38,6 +38,7 @@ type(par5,felony)
 hospitalization(hosp6)
 hospitalization.facility(hosp6,hospital)
 hospitalization.startdate(hosp6,2021_08_01)
+hospitalization.enddate(hosp6,2021_08_02)
 cause(hosp6,preexist6)
 type(preexist6,preexist)
 
