@@ -22,9 +22,9 @@ covered(af9100, Hospitalization, confinement) :-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 exclusion(af9100, Hospitalization, not_in_effect) :-
-  hospitalization.startdate(Hospitalization, End) &
-  hospitalization.enddate(Hospitalization, Start) &
-  policy_in_effect(af9100, Start, End)
+  hospitalization.startdate(Hospitalization, Start) &
+  hospitalization.enddate(Hospitalization, End) &
+  ~policy_in_effect(af9100, Start, End)
 
 exclusion(af9100, Hospitalization, short) :-
   duration(Hospitalization, Duration) &
@@ -38,9 +38,9 @@ exclusion(af9100, Hospitalization, Section) :-
 exclusion(af9100, Hospitalization, 2_a_1) :-
   eventual_cause_type(Hospitalization, preexist) &
   policy.startdate(lfsc, PS) &
-  parsedate(PS, StartDate) &
+  evaluate(parsedate(PS), StartDate) &
   hospitalization.startdate(Hospitalization, ZS) &
-  parsedate(ZS, HospDate) &
+  evaluate(parsedate(ZS), HospDate) &
   months_since(StartDate, HospDate, Months) &
   less(Months, 12)
 
@@ -56,9 +56,9 @@ exclusion(af9100, _, 2_c) :- fraud
 exclusion(af9100, Hospitalization, 2_d_1) :-
   eventual_cause_type(Hospitalization, pregnancy_routine) &
   policy.startdate(af9100, PS) &
-  parsedate(PS, StartDate) &
+  evaluate(parsedate(PS), StartDate) &
   hospitalization.startdate(Hospitalization,ZS) &
-  parsedate(ZS, HospDate) &
+  evaluate(parsedate(ZS), HospDate) &
   months_since(StartDate, HospDate, Months) &
   less(Months, 10)
 
@@ -80,9 +80,9 @@ excluded_cause(war, 2_d_9)
 exclusion(af9100, Hospitalization, 2_d_10) :-
   eventual_cause_type(Hospitalization, organ_donation) &
   policy.startdate(af9100, PS) &
-  parsedate(PS, StartDate) &
+  evaluate(parsedate(PS), StartDate) &
   hospitalization.startdate(Hospitalization,ZS) &
-  parsedate(ZS, HospDate) &
+  evaluate(parsedate(ZS), HospDate) &
   months_since(StartDate, HospDate, Months) &
   less(Months, 12)
 

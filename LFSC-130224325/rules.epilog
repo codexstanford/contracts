@@ -29,7 +29,7 @@ covered(lfsc, Hospitalization, confinement) :-
 exclusion(lfsc, Hospitalization, not_in_effect) :-
   hospitalization.startdate(Hospitalization, Start) &
   hospitalization.enddate(Hospitalization, End) &
-  policy_in_effect(lfsc, Start, End)
+  ~policy_in_effect(lfsc, Start, End)
 
 % Care provided outside USA and Canada
 exclusion(lfsc, Hospitalization, geographic) :-
