@@ -31,12 +31,12 @@ exclusion(af9100, Hospitalization, short) :-
   less(Duration, 82800000)
 
 exclusion(af9100, Hospitalization, Section) :-
-  eventually_caused_by_type(Hospitalization, Type) &
+  eventual_cause_type(Hospitalization, Type) &
   excluded_cause(Type, Section)
 
 % Care for pre-existing condition in first 12 months of coverage
 exclusion(af9100, Hospitalization, 2_a_1) :-
-  eventually_caused_by_type(Hospitalization, preexist) &
+  eventual_cause_type(Hospitalization, preexist) &
   policy.startdate(lfsc, PS) &
   parsedate(PS, StartDate) &
   hospitalization.startdate(Hospitalization, ZS) &
@@ -54,7 +54,7 @@ exclusion(af9100, _, 2_c) :- fraud
 
 % Routine pregnancy/newborn care in the first 10 months of coverage
 exclusion(af9100, Hospitalization, 2_d_1) :-
-  eventually_caused_by_type(Hospitalization, pregnancy_routine) &
+  eventual_cause_type(Hospitalization, pregnancy_routine) &
   policy.startdate(af9100, PS) &
   parsedate(PS, StartDate) &
   hospitalization.startdate(Hospitalization,ZS) &
@@ -71,14 +71,14 @@ excluded_cause(self_inflicted, 2_d_6)
 exclusion(af9100, Hospitalization, 2_d_7) :-
   cause(Hospitalization, Event) &
   type(Event, dental_care) &
-  ~eventually_caused_by_type(Event, injury)
+  ~eventual_cause_type(Event, injury)
 
 excluded_cause(surgery_not_necessary, 2_d_8)
 excluded_cause(war, 2_d_9)
 
 % Organ donation in the first year of coverage
 exclusion(af9100, Hospitalization, 2_d_10) :-
-  eventually_caused_by_type(Hospitalization, organ_donation) &
+  eventual_cause_type(Hospitalization, organ_donation) &
   policy.startdate(af9100, PS) &
   parsedate(PS, StartDate) &
   hospitalization.startdate(Hospitalization,ZS) &
@@ -87,13 +87,13 @@ exclusion(af9100, Hospitalization, 2_d_10) :-
   less(Months, 12)
 
 exclusion(af9100, Hospitalization, 2_d_11) :-
-  eventually_caused_by_type(Hospitalization, mental) &
-  ~eventually_caused_by_type(Hospitalization, senility)
+  eventual_cause_type(Hospitalization, mental) &
+  ~eventual_cause_type(Hospitalization, senility)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% util
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-eventually_caused_by_type(Event, Type) :-
+eventual_cause_type(Event, Type) :-
   eventual_cause(Event, Cause) &
   type(Cause, Type)
