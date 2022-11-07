@@ -1,0 +1,76 @@
+commonSetup: |
+  policy(lfsc)
+  policy.startdate(lfsc,2021_01_01)
+  policy.enddate(lfsc,2021_12_31)
+---
+label: Basic hospitalization (covered)
+setup: |
+  hospitalization(hosp)
+  hospitalization.facility(hosp,hospital)
+check: |
+  covers(lfsc,hosp)
+---
+
+label: Hospitalization outside coverage period (excluded)
+setup: |
+  hospitalization(hosp)
+  hospitalization.facility(hosp,hospital)
+  hospitalization.startdate(hosp,2022_01_01)
+  hospitalization.enddate(hosp,2022_01_02)
+check: |
+  exclusion(lfsc,hosp,not_in_effect)
+---
+
+label: Hospitalization outside USA/Canada (excluded)
+setup: |
+  hospitalization(hosp)
+  hospitalization.facility(hosp,hospital)
+  hospitalization.hospital(hosp,hospital1)
+  hospital.country(hospital1,germany)
+check: |
+  exclusion(lfsc,hosp,geographic)
+---
+
+label: Hospitalization proximately for excluded cause (excluded)
+setup: |
+  hospitalization(hosp)
+  hospitalization.facility(hosp,hospital)
+  type(racing1,racing)
+  cause(hosp,racing1)
+check: |
+  exclusion(lfsc,hosp,racing)
+---
+
+label: Hospitalization ultimately for excluded cause (excluded)
+setup: |
+  hospitalization(hosp)
+  hospitalization.facility(hosp,hospital)
+  cause(hosp,inj)
+  type(inj,injury)
+  cause(inj,par)
+  type(par,parachuting)
+check: |
+  exclusion(lfsc,hosp,parachuting)
+---
+
+label: Hospitalization for pre-existing condition after 6 months (covered)
+setup: |
+  hospitalization(hosp)
+  hospitalization.facility(hosp,hospital)
+  hospitalization.startdate(hosp,2021_08_01)
+  cause(hosp,preexist1)
+  type(preexist1,preexist)
+check: |
+  covers(lfsc,hosp)
+---
+
+label: Hospitalization for pre-existing condition before 6 months (excluded)
+setup: |
+  hospitalization(hosp)
+  hospitalization.facility(hosp,hospital)
+  hospitalization.startdate(hosp,2021_02_01)
+  hospitalization.enddate(hosp,2021_02_02)
+  cause(hosp,preexist1)
+  type(preexist1,preexist)
+check: |
+  exclusion(lfsc,hosp,preexist)

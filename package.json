@@ -1,8 +1,11 @@
 {
+  "type": "module",
   "scripts": {
-    "test": "node --test"
+    "test": "node test.js"
   },
   "dependencies": {
-    "@epilog/epilog": "file:../epilogjs"
+    "@epilog/epilog": "file:../epilogjs",
+    "glob": "^8.0.3",
+    "yaml": "^2.1.3"
   }
 }

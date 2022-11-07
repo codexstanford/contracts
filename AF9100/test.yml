@@ -1,0 +1,93 @@
+commonSetup: |
+  policy(af9100)
+  policy.startdate(af9100,2020_01_01)
+  policy.enddate(af9100,2021_12_31)
+---
+label: Basic hospitalization (covered)
+setup: |
+  hospitalization(hosp)
+  hospitalization.facility(hosp,hospital)
+check: |
+  covers(af9100,hosp)
+---
+label: Hospitalization outside coverage period (excluded)
+setup: |
+  hospitalization(hosp)
+  hospitalization.facility(hosp,hospital)
+  hospitalization.startdate(hosp,2022_01_01)
+  hospitalization.enddate(hosp,2022_01_02)
+check: |
+  exclusion(af9100,hosp,not_in_effect)
+---
+label: Hospitalization shorter than 23 hours (excluded)
+setup: |
+  hospitalization(hosp_short)
+  hospitalization.facility(hosp_short,hospital)
+  hospitalization.startdate(hosp_short,2021_01_01)
+  hospitalization.starttime(hosp_short,00_00_00)
+  hospitalization.enddate(hosp_short,2021_01_01)
+  hospitalization.endtime(hosp_short,00_01_00)
+check: |
+  exclusion(af9100,hosp_short,short)
+---
+label: Hospitalization proximately for excluded cause (excluded)
+setup: |
+  hospitalization(hosp)
+  hospitalization.facility(hosp,hospital)
+  type(racing1,felony)
+  cause(hosp,racing1)
+check: |
+  exclusion(af9100,hosp,2_d_4)
+---
+label: Hospitalization ultimately for excluded cause (excluded)
+setup: |
+  hospitalization(hosp)
+  hospitalization.facility(hosp,hospital)
+  cause(hosp,inj5)
+  type(inj5,injury)
+  cause(inj5,par5)
+  type(par5,felony)
+check: |
+  exclusion(af9100,hosp,2_d_4)
+---
+label: Hospitalization for pre-existing condition after 12 months (covered)
+setup: |
+  hospitalization(hosp)
+  hospitalization.facility(hosp,hospital)
+  hospitalization.startdate(hosp,2021_08_01)
+  hospitalization.enddate(hosp,2021_08_02)
+  cause(hosp,preexist6)
+  type(preexist6,preexist)
+check: |
+  covers(af9100,hosp)
+---
+label: Hospitalization for pre-existing condition before 12 months (excluded)
+setup: |
+  hospitalization(hosp)
+  hospitalization.facility(hosp,hospital)
+  hospitalization.startdate(hosp,2020_02_01)
+  hospitalization.enddate(hosp,2020_02_02)
+  cause(hosp,preexist7)
+  type(preexist7,preexist)
+check: |
+  exclusion(af9100,hosp,2_a_1)
+---
+label: Hospitalization for dental treatment arising from injury (covered)
+setup: |
+  hospitalization(hosp_dental_injury)
+  hospitalization.facility(hosp_dental_injury,hospital)
+  cause(hosp_dental_injury,dental1)
+  type(dental1,dental_care)
+  cause(dental1,injury1)
+  type(injury1,injury)
+check: |
+  covers(af9100,hosp_dental_injury)
+---
+label: Hospitalization for dental treatment not arising from injury (excluded)
+setup: |
+  hospitalization(hosp_dental)
+  hospitalization.facility(hosp_dental,hospital)
+  cause(hosp_dental,dental2)
+  type(dental2,dental_care)
+check: |
+  exclusion(af9100,hosp_dental,2_d_7)
